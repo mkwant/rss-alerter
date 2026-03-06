@@ -46,5 +46,4 @@ USER nonroot
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
 # Note in production, you should use `fastapi run` instead
-# CMD ["uv", "run", "src/main.py"]
-ENTRYPOINT ["/bin/bash"]
+CMD ["uv", "run", "src/rss_alert/main.py"]

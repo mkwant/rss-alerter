@@ -1,30 +1,49 @@
-# Base Python image
-FROM python:3.14-slim
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Copy uv binary from upstream image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
+# Setup a non-root user
+RUN groupadd --system --gid 999 nonroot \
+ && useradd --system --gid 999 --uid 999 --create-home nonroot
 
-# Environment
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV TZ=Europe/Amsterdam
-ENV PIP_ROOT_USER_ACTION=ignore
-ENV TERM=xterm-256color
-ENV PYTHONPATH=/app
-
-# Set working directory
+# Install the project into `/app`
 WORKDIR /app
 
-# Copy metadata for dependency installation
-COPY pyproject.toml uv.lock* ./
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# Pre-install all dependencies in container Python
-RUN uv sync --no-dev --frozen
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-# Copy source code
-COPY src/rss_alert ./rss_alert
+# Omit development dependencies
+ENV UV_NO_DEV=1
 
-# Runtime folder
-RUN mkdir -p history
+# Ensure installed tools can be executed out of the box
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
-ENTRYPOINT ["uv", "run", "rss_alert/main.py"]
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project
+
+# Then, add the rest of the project source code and install it
+# Installing separately from its dependencies allows optimal layer caching
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT []
+
+# Use the non-root user to run our application
+USER nonroot
+
+# Run the FastAPI application by default
+# Uses `uv run` to sync dependencies on startup, respecting UV_NO_DEV
+# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
+# Uses `--host 0.0.0.0` to allow access from outside the container
+# Note in production, you should use `fastapi run` instead
+CMD ["uv", "run", "src/main.py"]

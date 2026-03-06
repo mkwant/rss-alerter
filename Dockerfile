@@ -13,14 +13,13 @@ WORKDIR /app
 # Copy pyproject.toml
 COPY pyproject.toml /app/
 
-# Install dependencies via uv
-RUN uv sync
-
 # Copy source code
 COPY . /app
 
 # Make history folder writable
 RUN mkdir -p /app/history
 
-# Default entrypoint: run CLI via uv
-ENTRYPOINT ["uv", "run", "-m", "rss_alert.main"]
+# Install dependencies via uv
+RUN uv sync --frozen
+
+ENTRYPOINT ["rss-alert"]

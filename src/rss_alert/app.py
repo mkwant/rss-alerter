@@ -1,5 +1,3 @@
-import asyncio
-
 import httpx
 import tenacity
 import truststore
@@ -75,7 +73,3 @@ async def rss_alert(rss_url: str) -> None:
         alerter=alerter,
         rss_url=rss_url,
     )
-
-
-if __name__ == "__main__":
-    asyncio.run(rss_alert(rss_url="https://auctionrss.ceruliz.nl/montreuxjazzshop?search_term=bowie"))

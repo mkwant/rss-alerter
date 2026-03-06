@@ -6,6 +6,7 @@ COPY --from=ghcr.io/astral-sh/uv@sha256:87a04222b228501907f487b338ca6fc1514a9336
 # Set timezone
 ENV TZ=Europe/Amsterdam
 ENV PIP_ROOT_USER_ACTION=ignore
+ENV TERM xterm-256color
 
 WORKDIR /app
 

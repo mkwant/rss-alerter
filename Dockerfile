@@ -27,6 +27,5 @@ COPY src/rss_alert ./rss_alert
 # Runtime folder
 RUN mkdir -p history
 
-ENV PYTHONPATH=/app/src
 ENTRYPOINT ["python", "-m", "rss_alert.main"]
 # ENTRYPOINT ["/bin/bash"]

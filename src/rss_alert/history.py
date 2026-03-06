@@ -3,6 +3,7 @@ from pathlib import Path
 
 HISTORY_FILE = Path("history.json")
 
+
 def load_history() -> dict[str, list[str]]:
     """Return history as {feed_url: [guid1, guid2, ...]}"""
     if not HISTORY_FILE.exists():

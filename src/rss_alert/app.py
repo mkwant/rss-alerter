@@ -12,9 +12,6 @@ from rss_alert.telegrambot import TelegramAlerter
 truststore.inject_into_ssl()
 
 
-# TODO Docker container
-
-
 def format_message(item: dict[str, str]) -> str:
     """Helper to format the message"""
     return f"*{item['title']}*\n{item['description']}\n{item['link']}"

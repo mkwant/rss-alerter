@@ -24,4 +24,4 @@ RUN uv pip install .
 # Runtime folder
 RUN mkdir -p /app/history
 
-ENTRYPOINT ["rss-alert"]
+ENTRYPOINT ["python", "-m", "rss_alert.main"]

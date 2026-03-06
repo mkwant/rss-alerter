@@ -9,12 +9,6 @@ ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
 
-# Install system dependencies (for SSL, building wheels)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy pyproject.toml
 COPY pyproject.toml /app/
 
@@ -26,10 +20,6 @@ COPY . /app
 
 # Make history folder writable
 RUN mkdir -p /app/history
-
-# Environment variables for Telegram (can be overridden at runtime)
-#ENV TELEGRAM_TOKEN=""
-#ENV TELEGRAM_CHAT_ID=""
 
 # Default entrypoint: run CLI via uv
 ENTRYPOINT ["uv", "run", "-m", "rss_alert.main"]

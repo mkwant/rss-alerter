@@ -22,4 +22,4 @@ RUN mkdir -p /app/history
 # Install dependencies via uv
 RUN uv sync --no-dev --frozen
 
-ENTRYPOINT ["rss-alert"]
+ENTRYPOINT ["python", "-m", "rss_alert.main"]

@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y build-essential libffi-dev libssl-dev
 # Set the working directory
 WORKDIR /app
 
+ENV PYTHONPATH=${PYTHONPATH}:/app
+
 # Copy metadata for dependency installation
 COPY pyproject.toml uv.lock* ./
 
@@ -27,4 +29,5 @@ RUN mkdir -p history
 
 # Run the main module directly
 # ENTRYPOINT ["python", "-m", "rss_alert.main"]
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["uv", "run", "rss_alert/main.py"]
+# ENTRYPOINT ["/bin/bash"]

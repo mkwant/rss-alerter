@@ -2,7 +2,7 @@
 FROM python@sha256:6a27522252aef8432841f224d9baaa6e9fce07b07584154fa0b9a96603af7456
 
 # Copy uv binary from upstream image
-COPY --from=ghcr.io/astral-sh/uv@sha256:87a04222b228501907f487b338ca1fc1514a93369bfce6930eb06c8d576e58a4 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv@sha256:87a04222b228501907f487b338ca6fc1514a93369bfce6930eb06c8d576e58a4 /uv /uvx /bin/
 
 # Environment
 ENV PYTHONDONTWRITEBYTECODE=1

@@ -26,4 +26,5 @@ COPY src/rss_alert ./rss_alert
 RUN mkdir -p history
 
 # Run the main module directly
-ENTRYPOINT ["python", "-m", "rss_alert.main"]
+# ENTRYPOINT ["python", "-m", "rss_alert.main"]
+ENTRYPOINT ["/bin/bash"]

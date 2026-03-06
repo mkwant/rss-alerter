@@ -8,20 +8,19 @@ ENV TZ=Europe/Amsterdam
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TERM=xterm-256color
 
-# Install dependencies
-COPY pyproject.toml uv.lock* ./
-RUN uv sync \
-    --no-dev \
-    --frozen \
-    --no-install-project
+WORKDIR /app
 
-# Copy source
-COPY src/ src/
+# Copy files
+COPY pyproject.toml uv.lock* src/ ./src/
 
-# Install project (creates CLI)
+# Install dependencies only
+RUN uv sync --no-dev --frozen --no-install-project
+
+# Install project itself (creates module + CLI)
 RUN uv pip install .
 
 # Runtime folder
 RUN mkdir -p /app/history
 
+# Use Python module for now (CLI can be used once installed)
 ENTRYPOINT ["python", "-m", "rss_alert.main"]

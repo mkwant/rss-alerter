@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 HISTORY_FILE = Path("history/history.json")
-print(HISTORY_FILE.resolve())
+
 
 def load_history() -> dict[str, list[str]]:
     """Return history as {feed_url: [guid1, guid2, ...]}"""

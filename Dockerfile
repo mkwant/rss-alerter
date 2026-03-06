@@ -19,7 +19,8 @@ ENV PYTHONPATH=${PYTHONPATH}:/app
 COPY pyproject.toml uv.lock* ./
 
 # Install dependencies inside container Python environment (portable across architectures)
-RUN uv sync --no-dev --frozen --no-install-project
+RUN uv sync --no-dev --frozen
+#RUN uv sync --no-dev --frozen --no-install-project
 
 # Copy source code
 COPY src/rss_alert ./rss_alert

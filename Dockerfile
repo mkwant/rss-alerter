@@ -8,6 +8,8 @@ ENV TZ=Europe/Amsterdam
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TERM=xterm-256color
 
+RUN apt-get update && apt-get install -y build-essential libffi-dev libssl-dev
+
 # Set the working directory
 WORKDIR /app
 

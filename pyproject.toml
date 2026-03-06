@@ -27,6 +27,9 @@ rss-alert = "rss_alert.main:main"
 [tool.uv]
 package = true
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff]
 line-length = 120
 

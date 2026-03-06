@@ -25,4 +25,5 @@ RUN uv pip install .
 RUN mkdir -p /app/history
 
 ENV PYTHONPATH=/app/src
-ENTRYPOINT ["python", "-m", "rss_alert.main"]
+# ENTRYPOINT ["python", "-m", "rss_alert.main"]
+ENTRYPOINT ["/bin/bash"]

@@ -20,6 +20,6 @@ COPY . /app
 RUN mkdir -p /app/history
 
 # Install dependencies via uv
-RUN uv sync --frozen
+RUN uv sync --no-dev --frozen
 
 ENTRYPOINT ["rss-alert"]

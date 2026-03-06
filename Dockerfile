@@ -8,9 +8,6 @@ ENV TZ=Europe/Amsterdam
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TERM=xterm-256color
 
-# Set the Python path
-ENV PYTHONPATH /app
-
 # Set the working directory
 WORKDIR /app
 
@@ -19,7 +16,8 @@ COPY pyproject.toml uv.lock* ./
 RUN uv sync \
     --no-dev \
     --frozen \
-    --no-install-project
+    --no-install-project \
+    --system
 
 # Copy source
 COPY src/rss_alert ./rss_alert

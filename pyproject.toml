@@ -21,9 +21,6 @@ dev = [
     "ty>=0.0.21",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [tool.ruff]
 line-length = 120
 

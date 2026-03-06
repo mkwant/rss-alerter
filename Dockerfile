@@ -11,15 +11,17 @@ ENV TERM=xterm-256color
 # Set the working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy metadata for dependency installation
 COPY pyproject.toml uv.lock* ./
-RUN uv sync --no-dev --frozen --no-install-project --system
 
-# Copy source
+# Install dependencies inside container Python environment (portable across architectures)
+RUN uv sync --no-dev --frozen --no-install-project
+
+# Copy source code
 COPY src/rss_alert ./rss_alert
 
 # Runtime folder
 RUN mkdir -p history
 
+# Run the main module directly
 ENTRYPOINT ["python", "-m", "rss_alert.main"]
-# ENTRYPOINT ["/bin/bash"]

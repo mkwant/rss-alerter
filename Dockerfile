@@ -11,6 +11,9 @@ ENV TERM=xterm-256color
 # Set the Python path
 ENV PYTHONPATH /app
 
+# Set the working directory
+WORKDIR /app
+
 # Install dependencies
 COPY pyproject.toml uv.lock* ./
 RUN uv sync \
@@ -20,9 +23,6 @@ RUN uv sync \
 
 # Copy source
 COPY src/ src/
-
-# Set the working directory
-WORKDIR /app
 
 # Install project (creates CLI)
 # RUN uv pip install .

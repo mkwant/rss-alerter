@@ -21,12 +21,6 @@ dev = [
     "ty>=0.0.21",
 ]
 
-[project.scripts]
-rss-alert = "rss_alert.main:main"
-
-[tool.uv]
-package = true
-
 [tool.setuptools.packages.find]
 where = ["src"]
 

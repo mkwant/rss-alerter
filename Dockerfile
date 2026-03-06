@@ -1,4 +1,4 @@
-FROM python:3.14
+FROM python@sha256:6a27522252aef8432841f224d9baaa6e9fce07b07584154fa0b9a96603af7456
 
 COPY --from=ghcr.io/astral-sh/uv@sha256:87a04222b228501907f487b338ca6fc1514a93369bfce6930eb06c8d576e58a4 /uv /uvx /bin/
 
@@ -8,19 +8,20 @@ ENV TZ=Europe/Amsterdam
 ENV PIP_ROOT_USER_ACTION=ignore
 ENV TERM=xterm-256color
 
-WORKDIR /app
+# Install dependencies
+COPY pyproject.toml uv.lock* ./
+RUN uv sync \
+    --no-dev \
+    --frozen \
+    --no-install-project
 
-# Copy files
-COPY pyproject.toml uv.lock* src/ ./src/
+# Copy source
+COPY src/ src/
 
-# Install dependencies only
-RUN uv sync --no-dev --frozen --no-install-project
-
-# Install project itself (creates module + CLI)
+# Install project (creates CLI)
 RUN uv pip install .
 
 # Runtime folder
 RUN mkdir -p /app/history
 
-# Use Python module for now (CLI can be used once installed)
 ENTRYPOINT ["python", "-m", "rss_alert.main"]

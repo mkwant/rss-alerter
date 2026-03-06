@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 import tenacity
 import truststore
@@ -10,6 +12,8 @@ from rss_alert.models import Alerter
 from rss_alert.telegrambot import TelegramAlerter
 
 truststore.inject_into_ssl()
+
+logger.add(sink=Path("logs/rss-alert.log"), level="INFO")
 
 
 def format_message(item: dict[str, str]) -> str:

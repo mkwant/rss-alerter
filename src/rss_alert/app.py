@@ -49,10 +49,10 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
             logger.warning(f"No guid found for {item.get('title')}")
             continue
         if guid in feed_history:
-            logger.info("Old item", guid=guid, title=item.get("title"))
+            logger.info(f"Old item: {guid} - {item.get('title')}")
             continue
 
-        logger.info("New item", guid=guid, title=item.get("title"))
+        logger.info(f"New item: {guid} - {item.get('title')}, sending alert")
         await alerter.send_alert(format_message(item))
         feed_history.add(guid)
         new_items = True

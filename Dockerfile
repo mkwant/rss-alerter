@@ -31,5 +31,5 @@ COPY src/ src/
 RUN mkdir -p history
 
 ENV PYTHONPATH=/app/src
-# ENTRYPOINT ["python", "-m", "rss_alert.main"]
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["python", "-m", "src.rss_alert.main"]
+# ENTRYPOINT ["/bin/bash"]

@@ -27,6 +27,9 @@ RUN uv sync --no-dev --frozen
 # Copy source code
 COPY src/rss_alert ./rss_alert
 
+# Install the project itself into the container Python environment
+RUN uv pip install ./rss_alert
+
 # Runtime folder
 RUN mkdir -p history
 

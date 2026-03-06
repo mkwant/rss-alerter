@@ -35,4 +35,5 @@ ENV PYTHONPATH="/app/src:$PYTHONPATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-CMD ["uv", "run", "src/rss_alert/main.py"]
+# CMD ["uv", "run", "src/rss_alert/main.py"]
+CMD ["/bin/bash"]

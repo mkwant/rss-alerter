@@ -13,11 +13,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY pyproject.toml uv.lock* ./
-RUN uv sync \
-    --no-dev \
-    --frozen \
-    --no-install-project \
-    --system
+RUN uv sync --no-dev --frozen --no-install-project --system
 
 # Copy source
 COPY src/rss_alert ./rss_alert

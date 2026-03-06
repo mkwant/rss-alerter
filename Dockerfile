@@ -12,9 +12,6 @@ ENV PIP_ROOT_USER_ACTION=ignore
 ENV TERM=xterm-256color
 ENV PYTHONPATH=/app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y build-essential libffi-dev libssl-dev
-
 # Set working directory
 WORKDIR /app
 
@@ -30,5 +27,4 @@ COPY src/rss_alert ./rss_alert
 # Runtime folder
 RUN mkdir -p history
 
-# Entrypoint: uv will use the preinstalled dependencies
 ENTRYPOINT ["uv", "run", "rss_alert/main.py"]

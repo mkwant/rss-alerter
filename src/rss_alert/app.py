@@ -22,7 +22,7 @@ def format_message(item: dict[str, str]) -> str:
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(3))
-async def parse_rss(rss_url: str) -> list[dict[str, str]]:
+async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     """Retrieves and parses the RSS feed"""
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(rss_url)
@@ -44,7 +44,7 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
         history = load_history()
     feed_history = set(history.get(rss_url, []))  # convert to set for fast lookup
 
-    items = await parse_rss(rss_url)
+    items = await fetch_rss(rss_url)
 
     new_items = False
     for item in items:

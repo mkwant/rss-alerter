@@ -33,8 +33,11 @@ class TelegramAlerter:
 
     async def send_alert(self, msg: str) -> None:
         """Send a message to the telegram chat"""
-        await self.bot.send_message(
-            chat_id=self.telegram_chat_id,
-            text=msg,
-            parse_mode="markdown",
-        )
+        try:
+            await self.bot.send_message(
+                chat_id=self.telegram_chat_id,
+                text=msg,
+                parse_mode="markdown",
+            )
+        except telegram.error.TelegramError as e:
+            logger.error(f"Error sending telegram message {msg=}: {e}")

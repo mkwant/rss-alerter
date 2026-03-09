@@ -6,6 +6,7 @@ import truststore
 import xmltodict
 from filelock import FileLock
 from loguru import logger
+from pyexpat import ExpatError
 
 from rss_alert.history import load_history, save_history
 from rss_alert.models import Alerter
@@ -16,9 +17,19 @@ truststore.inject_into_ssl()
 logger.add(sink=Path("logs/rss-alert.log"), level="INFO")
 
 
+def escape_str(string: str) -> str:
+    """Escape special characters for strings to be used in a markdown message."""
+    string = string.replace("_", r"\_")
+    string = string.replace("*", r"\*")
+    return string
+
+
 def format_message(item: dict[str, str]) -> str:
     """Helper to format the message"""
-    return f"*{item['title']}*\n{item['description']}\n{item['link']}"
+    try:
+        return f"*{escape_str(item["title"])}*\n{escape_str(item["description"])}\n{escape_str(item["link"])}"
+    except KeyError:
+        return f"*{escape_str(item["title"])}*\n{escape_str(item["link"])}"
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(3))
@@ -28,7 +39,11 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
         r = await client.get(rss_url)
         r.raise_for_status()
 
-    rss_dict = xmltodict.parse(r.text)
+    try:
+        rss_dict = xmltodict.parse(r.text)
+    except ExpatError:
+        logger.error(f"Failed to parse RSS feed at '{rss_url}', not a valid XML file.")
+        return []
     items = rss_dict["rss"]["channel"]["item"]
 
     if isinstance(items, dict):
@@ -49,6 +64,11 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
     new_items = False
     for item in items:
         guid = item.get("guid") or item.get("link")
+
+        # If guid has a isPermaLink flag, use just the guid
+        if isinstance(guid, dict):
+            guid = guid.get("#text")
+
         title = item.get('title')
         if not guid:
             logger.warning(f"No guid found for {title=}")

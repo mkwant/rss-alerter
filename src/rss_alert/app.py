@@ -1,4 +1,5 @@
 from pathlib import Path
+from pyexpat import ExpatError
 
 import httpx
 import tenacity
@@ -6,7 +7,6 @@ import truststore
 import xmltodict
 from filelock import FileLock
 from loguru import logger
-from pyexpat import ExpatError
 
 from rss_alert.history import load_history, save_history
 from rss_alert.models import Alerter
@@ -27,9 +27,9 @@ def escape_str(string: str) -> str:
 def format_message(item: dict[str, str]) -> str:
     """Helper to format the message"""
     try:
-        return f"*{escape_str(item["title"])}*\n{escape_str(item["description"])}\n{escape_str(item["link"])}"
+        return f"*{escape_str(item['title'])}*\n{escape_str(item['description'])}\n{escape_str(item['link'])}"
     except KeyError:
-        return f"*{escape_str(item["title"])}*\n{escape_str(item["link"])}"
+        return f"*{escape_str(item['title'])}*\n{escape_str(item['link'])}"
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(3))
@@ -44,7 +44,12 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     except ExpatError:
         logger.error(f"Failed to parse RSS feed at '{rss_url}', not a valid XML file.")
         return []
-    items = rss_dict["rss"]["channel"]["item"]
+
+    try:
+        items = rss_dict["rss"]["channel"]["item"]
+    except KeyError:
+        logger.error(f"RSS feed at '{rss_url}' has no items, not a valid XML file.")
+        return []
 
     if isinstance(items, dict):
         items = [items]
@@ -69,7 +74,7 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
         if isinstance(guid, dict):
             guid = guid.get("#text")
 
-        title = item.get('title')
+        title = item.get("title")
         if not guid:
             logger.warning(f"No guid found for {title=}")
             continue

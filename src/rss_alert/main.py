@@ -6,25 +6,29 @@ from pydantic import HttpUrl, TypeAdapter, ValidationError
 
 from rss_alert.app import rss_alert
 
-app = typer.Typer(pretty_exceptions_enable=False)
-
+app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_is_help=True)
 url_adapter = TypeAdapter(HttpUrl)
 
 
-def run_rss_alert(rss_url: str) -> None:
+def run_rss_alert(rss_url: str, title_filter: str) -> None:
     """Sync wrapper for CLI / cron usage."""
-    asyncio.run(rss_alert(rss_url))
+    asyncio.run(rss_alert(rss_url=rss_url, title_filter=title_filter))
 
 
-@app.command(no_args_is_help=True)
-def alert(rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")]) -> None:
+@app.command(help="RSS Alerter, send Telegram notifications for new RSS entries.", no_args_is_help=True)
+def alert(
+    rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
+    title_filter: Annotated[
+        str, typer.Option("--filter", "-f", help="Only alert on RSS feed items with this text in the title")
+    ] = "",
+) -> None:
     for url in rss_urls:
         try:
             url_adapter.validate_python(url)
         except ValidationError:
             raise typer.BadParameter(f"'{url}' is not a valid URL")
 
-        run_rss_alert(url)
+        run_rss_alert(rss_url=url, title_filter=title_filter)
 
 
 def main() -> None:

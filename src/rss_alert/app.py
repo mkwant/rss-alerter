@@ -58,11 +58,13 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     return items
 
 
-async def process_feed(rss_url: str, alerter: Alerter) -> None:
+async def process_feed(rss_url: str, alerter: Alerter, title_filter: str = "") -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
+    title_filter = title_filter.lower()
     with FileLock("history.json.lock"):
         history = load_history()
-    feed_history = set(history.get(rss_url, []))  # convert to set for fast lookup
+    # Convert to set for faster lookups
+    feed_history = set(history.get(rss_url, {}).get(title_filter, []))
 
     items = await fetch_rss(rss_url)
 
@@ -75,9 +77,18 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
             guid = guid.get("#text")
 
         title = item.get("title")
+        if not title:
+            logger.warning(f"No title found for {guid=}")
+            continue
+
         if not guid:
             logger.warning(f"No guid found for {title=}")
             continue
+
+        if title_filter not in title.lower():
+            logger.debug(f"Item doesn't match filter '{title_filter}', skipped: {guid=}, {title=}")
+            continue
+
         if guid in feed_history:
             logger.debug(f"Old item: {guid=}, {title=}")
             continue
@@ -89,14 +100,16 @@ async def process_feed(rss_url: str, alerter: Alerter) -> None:
 
     if new_items:
         # convert set back to list
-        history[rss_url] = list(feed_history)
+        history.setdefault(rss_url, {})
+        history[rss_url][title_filter] = list(feed_history)
         save_history(history)
 
 
-async def rss_alert(rss_url: str) -> None:
+async def rss_alert(rss_url: str, title_filter: str = "") -> None:
     """Runs the RSS alert"""
     alerter = TelegramAlerter.from_env()
     await process_feed(
         alerter=alerter,
         rss_url=rss_url,
+        title_filter=title_filter,
     )

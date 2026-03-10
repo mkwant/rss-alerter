@@ -3,7 +3,6 @@ from pyexpat import ExpatError
 
 import httpx
 import tenacity
-import truststore
 import xmltodict
 from filelock import FileLock
 from loguru import logger
@@ -11,8 +10,6 @@ from loguru import logger
 from rss_alert.history import load_history, save_history
 from rss_alert.models import Alerter
 from rss_alert.telegrambot import TelegramAlerter
-
-truststore.inject_into_ssl()
 
 logger.add(sink=Path("logs/rss-alert.log"), level="INFO")
 

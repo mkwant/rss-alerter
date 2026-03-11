@@ -22,6 +22,9 @@ dev = [
     "ty>=0.0.21",
 ]
 
+[tool.uv]
+package = true
+
 [project.scripts]
 rss-alert = "rss_alert.main:main"
 

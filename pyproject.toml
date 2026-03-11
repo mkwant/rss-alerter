@@ -22,6 +22,12 @@ dev = [
     "ty>=0.0.21",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project.scripts]
 rss-alert = "rss_alert.main:main"
 

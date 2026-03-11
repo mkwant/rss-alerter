@@ -58,7 +58,9 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     return items
 
 
-async def process_feed(rss_url: str, alerter: Alerter, title_filters: list[str] | None = None) -> None:
+async def process_feed(
+    rss_url: str, alerter: Alerter, title_filters: list[str] | None = None, match_any: bool = False
+) -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
     if not title_filters:
         title_filters = [""]
@@ -88,7 +90,12 @@ async def process_feed(rss_url: str, alerter: Alerter, title_filters: list[str] 
             logger.warning(f"No guid found for {title=}")
             continue
 
-        if not all(x in title.lower() for x in title_filters):
+        if match_any:
+            matches = any(x in title.lower() for x in title_filters)
+        else:
+            matches = all(x in title.lower() for x in title_filters)
+
+        if not matches:
             logger.debug(f"Item doesn't match filter {title_filters}, skipped. ({guid=}, {title=})")
             continue
 
@@ -108,11 +115,12 @@ async def process_feed(rss_url: str, alerter: Alerter, title_filters: list[str] 
         save_history(history)
 
 
-async def rss_alert(rss_url: str, title_filters: list[str] | None = None) -> None:
+async def rss_alert(rss_url: str, title_filters: list[str] | None = None, match_any: bool = False) -> None:
     """Runs the RSS alert"""
     alerter = TelegramAlerter.from_env()
     await process_feed(
         alerter=alerter,
         rss_url=rss_url,
         title_filters=title_filters,
+        match_any=match_any,
     )

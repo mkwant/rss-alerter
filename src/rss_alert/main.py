@@ -10,9 +10,9 @@ app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_
 url_adapter = TypeAdapter(HttpUrl)
 
 
-def run_rss_alert(rss_url: str, title_filters: list[str] | None) -> None:
+def run_rss_alert(rss_url: str, title_filters: list[str] | None, match_any: bool = False) -> None:
     """Sync wrapper for CLI / cron usage."""
-    asyncio.run(rss_alert(rss_url=rss_url, title_filters=title_filters))
+    asyncio.run(rss_alert(rss_url=rss_url, title_filters=title_filters, match_any=match_any))
 
 
 @app.command(help="RSS Alerter, send Telegram notifications for new RSS entries.", no_args_is_help=True)
@@ -26,6 +26,13 @@ def alert(
             help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
         ),
     ] = None,
+    match_any: Annotated[
+        bool,
+        typer.Option(
+            "--any/--all",
+            help="Match any filter instead of requiring all filters",
+        ),
+    ] = False,
 ) -> None:
     for url in rss_urls:
         try:
@@ -33,7 +40,7 @@ def alert(
         except ValidationError:
             raise typer.BadParameter(f"'{url}' is not a valid URL")
 
-        run_rss_alert(rss_url=url, title_filters=title_filters)
+        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any)
 
 
 def main() -> None:

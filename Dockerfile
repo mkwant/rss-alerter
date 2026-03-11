@@ -20,7 +20,7 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --no-install-project
+    uv sync
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching

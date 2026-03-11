@@ -16,6 +16,8 @@ dependencies = [
     "xmltodict>=1.0.4",
 ]
 
+packages = ["rss_alert"]
+
 [dependency-groups]
 dev = [
     "ruff>=0.15.5",

@@ -16,19 +16,11 @@ dependencies = [
     "xmltodict>=1.0.4",
 ]
 
-packages = ["rss_alert"]
-
 [dependency-groups]
 dev = [
     "ruff>=0.15.5",
     "ty>=0.0.21",
 ]
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
 
 [project.scripts]
 rss-alert = "rss_alert.main:main"

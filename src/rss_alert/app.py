@@ -3,15 +3,18 @@ from pyexpat import ExpatError
 
 import httpx
 import tenacity
+import truststore
 import xmltodict
 from filelock import FileLock
 from loguru import logger
 
-from rss_alert.history import load_history, save_history
+from rss_alert.history import create_history_key, load_history, save_history
 from rss_alert.models import Alerter
 from rss_alert.telegrambot import TelegramAlerter
 
 logger.add(sink=Path("logs/rss-alert.log"), level="INFO")
+
+truststore.inject_into_ssl()  # Use OS trust store
 
 
 def escape_str(string: str) -> str:
@@ -55,13 +58,16 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     return items
 
 
-async def process_feed(rss_url: str, alerter: Alerter, title_filter: str = "") -> None:
+async def process_feed(rss_url: str, alerter: Alerter, title_filters: list[str] | None = None) -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
-    title_filter = title_filter.lower()
+    if not title_filters:
+        title_filters = [""]
+    title_filters = [x.lower() for x in title_filters]
+
     with FileLock("history.json.lock"):
         history = load_history()
     # Convert to set for faster lookups
-    feed_history = set(history.get(rss_url, {}).get(title_filter, []))
+    feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters), []))
 
     items = await fetch_rss(rss_url)
 
@@ -82,8 +88,8 @@ async def process_feed(rss_url: str, alerter: Alerter, title_filter: str = "") -
             logger.warning(f"No guid found for {title=}")
             continue
 
-        if title_filter not in title.lower():
-            logger.debug(f"Item doesn't match filter '{title_filter}', skipped: {guid=}, {title=}")
+        if not all(x in title.lower() for x in title_filters):
+            logger.debug(f"Item doesn't match filter {title_filters}, skipped. ({guid=}, {title=})")
             continue
 
         if guid in feed_history:
@@ -98,15 +104,15 @@ async def process_feed(rss_url: str, alerter: Alerter, title_filter: str = "") -
     if new_items:
         # convert set back to list
         history.setdefault(rss_url, {})
-        history[rss_url][title_filter] = list(feed_history)
+        history[rss_url][create_history_key(title_filters)] = list(feed_history)
         save_history(history)
 
 
-async def rss_alert(rss_url: str, title_filter: str = "") -> None:
+async def rss_alert(rss_url: str, title_filters: list[str] | None = None) -> None:
     """Runs the RSS alert"""
     alerter = TelegramAlerter.from_env()
     await process_feed(
         alerter=alerter,
         rss_url=rss_url,
-        title_filter=title_filter,
+        title_filters=title_filters,
     )

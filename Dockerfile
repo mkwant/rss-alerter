@@ -33,4 +33,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
 # Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT []
+ENTRYPOINT ["rss-alert"]

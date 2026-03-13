@@ -2,7 +2,6 @@ import os
 from typing import Self
 
 import dotenv
-import telegram
 from loguru import logger
 
 dotenv.load_dotenv()
@@ -22,7 +21,6 @@ class TelegramAlerter:
             raise ValueError(error_msg)
         self.telegram_token: str = telegram_token
         self.telegram_chat_id: str = telegram_chat_id
-        self.bot = telegram.Bot(token=self.telegram_token)
 
     @classmethod
     def from_env(cls) -> Self:
@@ -33,8 +31,11 @@ class TelegramAlerter:
 
     async def send_alert(self, msg: str) -> None:
         """Send a message to the telegram chat"""
+        import telegram
+
+        bot = telegram.Bot(token=self.telegram_token)
         try:
-            await self.bot.send_message(
+            await bot.send_message(
                 chat_id=self.telegram_chat_id,
                 text=msg,
                 parse_mode="markdown",

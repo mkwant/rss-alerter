@@ -66,10 +66,15 @@ async def process_feed(
         title_filters = [""]
     title_filters = [x.lower() for x in title_filters]
 
+    if match_any:
+        separator = "&"
+    else:
+        separator = "|"
+
     with FileLock("history.json.lock"):
         history = load_history()
     # Convert to set for faster lookups
-    feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters), []))
+    feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters, separator), []))
 
     items = await fetch_rss(rss_url)
 
@@ -111,7 +116,7 @@ async def process_feed(
     if new_items:
         # convert set back to list
         history.setdefault(rss_url, {})
-        history[rss_url][create_history_key(title_filters)] = list(feed_history)
+        history[rss_url][create_history_key(title_filters, separator)] = list(feed_history)
         save_history(history)
 
 

@@ -15,7 +15,6 @@ def save_history(history: dict[str, dict[str, list[str]]]) -> None:
     HISTORY_FILE.write_text(json.dumps(obj=history, indent=4))
 
 
-def create_history_key(title_filters: list[str]) -> str:
+def create_history_key(title_filters: list[str], separator: str) -> str:
     """Creates the history key."""
-    separator = ","
     return separator.join(sorted(title_filters))

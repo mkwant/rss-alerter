@@ -71,7 +71,7 @@ async def process_feed(
     else:
         separator = "|"
 
-    with FileLock("history.json.lock"):
+    with FileLock("history/history.json.lock"):
         history = load_history()
     # Convert to set for faster lookups
     feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters, separator), []))

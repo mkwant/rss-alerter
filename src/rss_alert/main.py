@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 from typing import Annotated
 
 import httpx
@@ -6,6 +7,10 @@ import tenacity
 import typer
 from loguru import logger
 from pydantic import HttpUrl, TypeAdapter, ValidationError
+
+from rss_alert.config import settings
+
+logger.add(sink=Path("logs/rss-alert.log"), level=settings.log_level)
 
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_is_help=True)
 url_adapter = TypeAdapter(HttpUrl)
@@ -21,9 +26,7 @@ def run_rss_alert(rss_url: str, title_filters: list[str] | None, match_any: bool
         cause = e.last_attempt.exception()
 
         if isinstance(cause, httpx.HTTPStatusError):
-            logger.error(
-                f"Failed to fetch RSS feed: HTTP error {cause.response.status_code} for {cause.request.url}"
-            )
+            logger.error(f"Failed to fetch RSS feed: HTTP error {cause.response.status_code} for {cause.request.url}")
         elif isinstance(cause, httpx.RequestError):
             logger.error(f"Network error while fetching RSS feed: {cause}")
         else:
@@ -35,22 +38,22 @@ def run_rss_alert(rss_url: str, title_filters: list[str] | None, match_any: bool
 
 @app.command(help="RSS Alert, send Telegram notifications for new RSS entries.", no_args_is_help=True)
 def alert(
-        rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
-        title_filters: Annotated[
-            list[str] | None,
-            typer.Option(
-                "--filter",
-                "-f",
-                help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
-            ),
-        ] = None,
-        match_any: Annotated[
-            bool,
-            typer.Option(
-                "--any/--all",
-                help="Match any filter instead of requiring all filters",
-            ),
-        ] = False,
+    rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
+    title_filters: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--filter",
+            "-f",
+            help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
+        ),
+    ] = None,
+    match_any: Annotated[
+        bool,
+        typer.Option(
+            "--any/--all",
+            help="Match any filter instead of requiring all filters",
+        ),
+    ] = False,
 ) -> None:
     for url in rss_urls:
         try:

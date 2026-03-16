@@ -1,10 +1,8 @@
-import os
 from typing import Self
 
-import dotenv
 from loguru import logger
 
-dotenv.load_dotenv()
+from rss_alert.config import settings
 
 
 class TelegramAlerter:
@@ -25,8 +23,8 @@ class TelegramAlerter:
     @classmethod
     def from_env(cls) -> Self:
         return cls(
-            telegram_token=os.getenv("TELEGRAM_TOKEN"),
-            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID"),
+            telegram_token=settings.telegram_token,
+            telegram_chat_id=settings.telegram_chat_id,
         )
 
     async def send_alert(self, msg: str) -> None:

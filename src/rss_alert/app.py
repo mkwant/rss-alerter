@@ -1,4 +1,3 @@
-from pathlib import Path
 from pyexpat import ExpatError
 
 import httpx
@@ -11,8 +10,6 @@ from loguru import logger
 from rss_alert.history import create_history_key, load_history, save_history
 from rss_alert.models import Alerter
 from rss_alert.telegrambot import TelegramAlerter
-
-logger.add(sink=Path("logs/rss-alert.log"), level="INFO")
 
 truststore.inject_into_ssl()  # Use OS trust store
 

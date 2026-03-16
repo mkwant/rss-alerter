@@ -73,5 +73,5 @@ export TELEGRAM_CHAT_ID=123456789
 Run every 5 minutes:
 
 ```bash
-*/5 * * * * rss-alert https://example.com/rss --filter bowie
+*/5 * * * * rss-alert https://example.com/rss --filter <keyword1>
 ```

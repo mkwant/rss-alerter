@@ -25,13 +25,21 @@ def version_callback(value: bool) -> None:
 
 
 def run_rss_alert(
-    rss_url: str, title_filters: list[str] | None, match_any: bool = False, autoclean: bool = False
+    rss_url: str,
+    title_filters: list[str] | None,
+    match_any: bool = False,
+    autoclean: bool = False,
+    muted: bool = False,
 ) -> None:
     """Sync wrapper for CLI / cron usage."""
     from rss_alert.app import rss_alert
 
     try:
-        asyncio.run(rss_alert(rss_url=rss_url, title_filters=title_filters, match_any=match_any, autoclean=autoclean))
+        asyncio.run(
+            rss_alert(
+                rss_url=rss_url, title_filters=title_filters, match_any=match_any, autoclean=autoclean, muted=muted
+            )
+        )
     except tenacity.RetryError as e:
         cause = e.last_attempt.exception()
 
@@ -67,6 +75,7 @@ def alert(
     autoclean: Annotated[
         bool, typer.Option(help="Remove items from history if they are not in the feed anymore.")
     ] = False,
+    muted: Annotated[bool, typer.Option("--muted/--alert", help="Don't send alerts, just log to screen.")] = False,
     _show_version: Annotated[
         bool,
         typer.Option(
@@ -84,7 +93,7 @@ def alert(
         except ValidationError:
             raise typer.BadParameter(f"'{url}' is not a valid URL")
 
-        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any, autoclean=autoclean)
+        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any, autoclean=autoclean, muted=muted)
 
 
 def main() -> None:

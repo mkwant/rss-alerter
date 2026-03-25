@@ -61,6 +61,7 @@ async def process_feed(
     title_filters: list[str] | None = None,
     match_any: bool = False,
     autoclean: bool = False,
+    muted: bool = False,
 ) -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
     if not title_filters:
@@ -109,8 +110,11 @@ async def process_feed(
             logger.debug(f"Old item: {guid=}, {title=}")
             continue
 
-        logger.info(f"New item: {guid=}, {title=} - sending alert")
-        await alerter.send_alert(format_message(item))
+        if not muted:
+            logger.info(f"New item: {guid=}, {title=} - sending alert")
+            await alerter.send_alert(format_message(item))
+        else:
+            logger.info(f"New item: {guid=}, {title=} - alert muted")
         feed_history.add(guid)
         new_items = True
 
@@ -132,7 +136,11 @@ async def process_feed(
 
 
 async def rss_alert(
-    rss_url: str, title_filters: list[str] | None = None, match_any: bool = False, autoclean: bool = False
+    rss_url: str,
+    title_filters: list[str] | None = None,
+    match_any: bool = False,
+    autoclean: bool = False,
+    muted: bool = False,
 ) -> None:
     """Runs the RSS alert"""
     alerter = TelegramAlerter.from_env()
@@ -142,4 +150,5 @@ async def rss_alert(
         title_filters=title_filters,
         match_any=match_any,
         autoclean=autoclean,
+        muted=muted,
     )

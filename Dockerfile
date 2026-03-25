@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY . .
 
 # Install the project itself
-RUN uv sync
+RUN uv pip install .
 
 # Set PATH to find the installed cli tool
 ENV PATH="/app/.venv/bin:$PATH"

@@ -56,7 +56,11 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
 
 
 async def process_feed(
-    rss_url: str, alerter: Alerter, title_filters: list[str] | None = None, match_any: bool = False
+    rss_url: str,
+    alerter: Alerter,
+    title_filters: list[str] | None = None,
+    match_any: bool = False,
+    autoclean: bool = False,
 ) -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
     if not title_filters:
@@ -110,14 +114,26 @@ async def process_feed(
         feed_history.add(guid)
         new_items = True
 
-    if new_items:
+    deleted_items = False
+    if autoclean:
+        new_items_guids = [x.get("guid") for x in items]
+        for guid in feed_history.copy():
+            if guid in new_items_guids:
+                continue
+            logger.info(f"Item found in history file but not in feed - deleting from history ({guid=})")
+            feed_history.remove(guid)
+            deleted_items = True
+
+    if new_items or deleted_items:
         # convert set back to list
         history.setdefault(rss_url, {})
         history[rss_url][create_history_key(title_filters, separator)] = list(feed_history)
         save_history(history)
 
 
-async def rss_alert(rss_url: str, title_filters: list[str] | None = None, match_any: bool = False) -> None:
+async def rss_alert(
+    rss_url: str, title_filters: list[str] | None = None, match_any: bool = False, autoclean: bool = False
+) -> None:
     """Runs the RSS alert"""
     alerter = TelegramAlerter.from_env()
     await process_feed(
@@ -125,4 +141,5 @@ async def rss_alert(rss_url: str, title_filters: list[str] | None = None, match_
         rss_url=rss_url,
         title_filters=title_filters,
         match_any=match_any,
+        autoclean=autoclean,
     )

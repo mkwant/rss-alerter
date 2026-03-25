@@ -8,8 +8,8 @@ import typer
 from loguru import logger
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 
-from rss_alert.config import settings
 from rss_alert import __version__
+from rss_alert.config import settings
 
 logger.add(sink=Path("logs/rss-alert.log"), level=settings.log_level)
 
@@ -24,12 +24,14 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-def run_rss_alert(rss_url: str, title_filters: list[str] | None, match_any: bool = False) -> None:
+def run_rss_alert(
+    rss_url: str, title_filters: list[str] | None, match_any: bool = False, autoclean: bool = False
+) -> None:
     """Sync wrapper for CLI / cron usage."""
     from rss_alert.app import rss_alert
 
     try:
-        asyncio.run(rss_alert(rss_url=rss_url, title_filters=title_filters, match_any=match_any))
+        asyncio.run(rss_alert(rss_url=rss_url, title_filters=title_filters, match_any=match_any, autoclean=autoclean))
     except tenacity.RetryError as e:
         cause = e.last_attempt.exception()
 
@@ -46,32 +48,35 @@ def run_rss_alert(rss_url: str, title_filters: list[str] | None, match_any: bool
 
 @app.command(help="RSS Alert, send Telegram notifications for new RSS entries.", no_args_is_help=True)
 def alert(
-        rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
-        title_filters: Annotated[
-            list[str] | None,
-            typer.Option(
-                "--filter",
-                "-f",
-                help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
-            ),
-        ] = None,
-        match_any: Annotated[
-            bool,
-            typer.Option(
-                "--any/--all",
-                help="Match any filter instead of requiring all filters",
-            ),
-        ] = False,
-        _show_version: Annotated[
-            bool,
-            typer.Option(
-                "--version",
-                "-v",
-                callback=version_callback,
-                is_eager=True,
-                help="Show version and exit",
-            ),
-        ] = False,
+    rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
+    title_filters: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--filter",
+            "-f",
+            help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
+        ),
+    ] = None,
+    match_any: Annotated[
+        bool,
+        typer.Option(
+            "--any/--all",
+            help="Match any filter instead of requiring all filters",
+        ),
+    ] = False,
+    autoclean: Annotated[
+        bool, typer.Option(help="Remove items from history if they are not in the feed anymore.")
+    ] = False,
+    _show_version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-v",
+            callback=version_callback,
+            is_eager=True,
+            help="Show version and exit",
+        ),
+    ] = False,
 ) -> None:
     for url in rss_urls:
         try:
@@ -79,7 +84,7 @@ def alert(
         except ValidationError:
             raise typer.BadParameter(f"'{url}' is not a valid URL")
 
-        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any)
+        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any, autoclean=autoclean)
 
 
 def main() -> None:

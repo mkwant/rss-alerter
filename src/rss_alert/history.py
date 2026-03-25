@@ -12,6 +12,7 @@ def load_history() -> dict[str, dict[str, list[str]]]:
 
 
 def save_history(history: dict[str, dict[str, list[str]]]) -> None:
+    """Save history as {feed_url: [guid1, guid2, ...]}"""
     HISTORY_FILE.write_text(json.dumps(obj=history, indent=4, sort_keys=True))
 
 

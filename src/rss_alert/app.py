@@ -131,7 +131,7 @@ async def process_feed(
     if new_items or deleted_items:
         # convert set back to list
         history.setdefault(rss_url, {})
-        history[rss_url][create_history_key(title_filters, separator)] = list(feed_history)
+        history[rss_url][create_history_key(title_filters, separator)] = sorted(list(feed_history))
         save_history(history)
 
 

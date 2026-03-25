@@ -9,12 +9,20 @@ from loguru import logger
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 
 from rss_alert import __version__
-from rss_alert.config import settings
-
-logger.add(sink=Path("logs/rss-alert.log"), level=settings.log_level)
+from rss_alert.config import Settings, load_settings
 
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_is_help=True)
 url_adapter = TypeAdapter(HttpUrl)
+
+
+def setup_logging(log_level: str) -> None:
+    """Setup logging configuration."""
+    Path("logs").mkdir(exist_ok=True)
+
+    logger.add(
+        sink=Path("logs/rss-alert.log"),
+        level=log_level,
+    )
 
 
 def version_callback(value: bool) -> None:
@@ -27,6 +35,7 @@ def version_callback(value: bool) -> None:
 def run_rss_alert(
     rss_url: str,
     title_filters: list[str] | None,
+    settings: Settings,
     match_any: bool = False,
     autoclean: bool = False,
     muted: bool = False,
@@ -37,7 +46,12 @@ def run_rss_alert(
     try:
         asyncio.run(
             rss_alert(
-                rss_url=rss_url, title_filters=title_filters, match_any=match_any, autoclean=autoclean, muted=muted
+                rss_url=rss_url,
+                title_filters=title_filters,
+                settings=settings,
+                match_any=match_any,
+                autoclean=autoclean,
+                muted=muted,
             )
         )
     except tenacity.RetryError as e:
@@ -65,6 +79,10 @@ def alert(
             help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
         ),
     ] = None,
+    env_file: Annotated[
+        str | None,
+        typer.Option("--env-file", "-e", help="Path to .env file. If not filled, script will try to detect one."),
+    ] = None,
     match_any: Annotated[
         bool,
         typer.Option(
@@ -87,13 +105,23 @@ def alert(
         ),
     ] = False,
 ) -> None:
+    settings = load_settings(env_file)
+    setup_logging(settings.log_level)
+
     for url in rss_urls:
         try:
             url_adapter.validate_python(url)
         except ValidationError:
             raise typer.BadParameter(f"'{url}' is not a valid URL")
 
-        run_rss_alert(rss_url=url, title_filters=title_filters, match_any=match_any, autoclean=autoclean, muted=muted)
+        run_rss_alert(
+            rss_url=url,
+            title_filters=title_filters,
+            settings=settings,
+            match_any=match_any,
+            autoclean=autoclean,
+            muted=muted,
+        )
 
 
 def main() -> None:

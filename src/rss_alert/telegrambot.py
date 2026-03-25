@@ -2,8 +2,6 @@ from typing import Self
 
 from loguru import logger
 
-from rss_alert.config import settings
-
 
 class TelegramAlerter:
     """Alerter for telegram chat"""
@@ -21,7 +19,7 @@ class TelegramAlerter:
         self.telegram_chat_id: str = telegram_chat_id
 
     @classmethod
-    def from_env(cls) -> Self:
+    def from_settings(cls, settings) -> Self:
         return cls(
             telegram_token=settings.telegram_token,
             telegram_chat_id=settings.telegram_chat_id,

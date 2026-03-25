@@ -7,6 +7,7 @@ import xmltodict
 from filelock import FileLock
 from loguru import logger
 
+from rss_alert.config import Settings
 from rss_alert.history import create_history_key, load_history, save_history
 from rss_alert.models import Alerter
 from rss_alert.telegrambot import TelegramAlerter
@@ -136,6 +137,7 @@ async def process_feed(
 
 
 async def rss_alert(
+    settings: Settings,
     rss_url: str,
     title_filters: list[str] | None = None,
     match_any: bool = False,
@@ -143,7 +145,7 @@ async def rss_alert(
     muted: bool = False,
 ) -> None:
     """Runs the RSS alert"""
-    alerter = TelegramAlerter.from_env()
+    alerter = TelegramAlerter.from_settings(settings=settings)
     await process_feed(
         alerter=alerter,
         rss_url=rss_url,

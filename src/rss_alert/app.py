@@ -32,7 +32,7 @@ def format_message(item: dict[str, str]) -> str:
 @tenacity.retry(stop=tenacity.stop_after_attempt(3))
 async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
     """Retrieves and parses the RSS feed"""
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         r = await client.get(rss_url)
         r.raise_for_status()
 

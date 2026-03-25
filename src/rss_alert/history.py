@@ -12,7 +12,7 @@ def load_history() -> dict[str, dict[str, list[str]]]:
 
 
 def save_history(history: dict[str, dict[str, list[str]]]) -> None:
-    HISTORY_FILE.write_text(json.dumps(obj=history, indent=4))
+    HISTORY_FILE.write_text(json.dumps(obj=history, indent=4, sort_keys=True))
 
 
 def create_history_key(title_filters: list[str], separator: str) -> str:

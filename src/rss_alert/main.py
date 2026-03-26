@@ -15,12 +15,10 @@ app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_
 url_adapter = TypeAdapter(HttpUrl)
 
 
-def setup_logging(log_level: str) -> None:
+def setup_logging(log_file: Path, log_level: str) -> None:
     """Setup logging configuration."""
-    Path("logs").mkdir(exist_ok=True)
-
     logger.add(
-        sink=Path("logs/rss-alert.log"),
+        sink=log_file,
         level=log_level,
     )
 
@@ -105,8 +103,8 @@ def alert(
         ),
     ] = False,
 ) -> None:
-    settings = load_settings(env_file)
-    setup_logging(settings.log_level)
+    settings = load_settings(env_file=env_file)
+    setup_logging(log_file=settings.log_file, log_level=settings.log_level)
 
     for url in rss_urls:
         try:

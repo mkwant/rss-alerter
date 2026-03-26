@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from dotenv import find_dotenv
 from pydantic import ValidationError
@@ -8,7 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     telegram_token: str
     telegram_chat_id: str
-    log_level: str = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    log_file: Path = Path("logs") / "rss-alert.log"
+    history_file: Path = Path("history") / "history.json"
 
     model_config = SettingsConfigDict(
         env_file=None,
@@ -20,7 +23,7 @@ def load_settings(env_file: Path | None = None) -> Settings:
     env_path = env_file or find_dotenv(usecwd=True) or None
 
     try:
-        return Settings(_env_file=env_path)  # type: ignore
+        settings = Settings(_env_file=env_path)  # type: ignore
     except ValidationError as e:
         print("\n❌ Configuration error\n")
 
@@ -33,3 +36,8 @@ def load_settings(env_file: Path | None = None) -> Settings:
                 print(f" - {err['msg']}: {err['loc'][0]}")
 
         raise SystemExit(1)
+
+    settings.log_file.parent.mkdir(parents=True, exist_ok=True)
+    settings.history_file.parent.mkdir(parents=True, exist_ok=True)
+
+    return settings

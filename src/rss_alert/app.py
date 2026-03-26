@@ -1,3 +1,4 @@
+from pathlib import Path
 from pyexpat import ExpatError
 
 import httpx
@@ -59,6 +60,7 @@ async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
 async def process_feed(
     rss_url: str,
     alerter: Alerter,
+    history_file: Path,
     title_filters: list[str] | None = None,
     match_any: bool = False,
     autoclean: bool = False,
@@ -74,12 +76,12 @@ async def process_feed(
     else:
         separator = "|"
 
-    with FileLock("history/history.json.lock"):
-        history = load_history()
+    with FileLock(f"{history_file}.lock"):
+        history = load_history(history_file=history_file)
     # Convert to set for faster lookups
     feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters, separator), []))
 
-    items = await fetch_rss(rss_url)
+    items = await fetch_rss(rss_url=rss_url)
 
     new_items = False
     for item in items:
@@ -133,7 +135,7 @@ async def process_feed(
         # convert set back to list
         history.setdefault(rss_url, {})
         history[rss_url][create_history_key(title_filters, separator)] = sorted(list(feed_history))
-        save_history(history)
+        save_history(history_file=history_file, history=history)
 
 
 async def rss_alert(
@@ -153,4 +155,5 @@ async def rss_alert(
         match_any=match_any,
         autoclean=autoclean,
         muted=muted,
+        history_file=settings.history_file,
     )

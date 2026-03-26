@@ -1,19 +1,17 @@
 import json
 from pathlib import Path
 
-HISTORY_FILE = Path("history/history.json")
 
-
-def load_history() -> dict[str, dict[str, list[str]]]:
+def load_history(history_file: Path) -> dict[str, dict[str, list[str]]]:
     """Return history as {feed_url: [guid1, guid2, ...]}"""
-    if not HISTORY_FILE.exists():
+    if not history_file.exists():
         return {}
-    return json.loads(HISTORY_FILE.read_text())
+    return json.loads(history_file.read_text())
 
 
-def save_history(history: dict[str, dict[str, list[str]]]) -> None:
+def save_history(history_file: Path, history: dict[str, dict[str, list[str]]]) -> None:
     """Save history as {feed_url: [guid1, guid2, ...]}"""
-    HISTORY_FILE.write_text(json.dumps(obj=history, indent=4, sort_keys=True))
+    history_file.write_text(json.dumps(obj=history, indent=4, sort_keys=True))
 
 
 def create_history_key(title_filters: list[str], separator: str) -> str:

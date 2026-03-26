@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import find_dotenv
 from pydantic import ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,7 +16,7 @@ class Settings(BaseSettings):
     )
 
 
-def load_settings(env_file: str | None = None) -> Settings:
+def load_settings(env_file: Path | None = None) -> Settings:
     env_path = env_file or find_dotenv(usecwd=True) or None
 
     try:

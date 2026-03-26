@@ -71,6 +71,10 @@ def run_rss_alert(
 @app.command(help="RSS Alert, send Telegram notifications for new RSS entries.", no_args_is_help=True)
 def alert(
     rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
+    env_file: Annotated[
+        Path | None,
+        typer.Option("--env-file", "-e", help="Path to .env file. If not filled, script will try to detect one."),
+    ] = None,
     title_filters: Annotated[
         list[str] | None,
         typer.Option(
@@ -78,10 +82,6 @@ def alert(
             "-f",
             help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
         ),
-    ] = None,
-    env_file: Annotated[
-        str | None,
-        typer.Option("--env-file", "-e", help="Path to .env file. If not filled, script will try to detect one."),
     ] = None,
     match_any: Annotated[
         bool,

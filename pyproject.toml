@@ -1,6 +1,6 @@
 [project]
 name = "rss-alert"
-version = "1.12.1"
+version = "1.12.2"
 description = "Sends an alert for new entries in an rss feed"
 requires-python = ">=3.14"
 dependencies = [

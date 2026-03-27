@@ -4,23 +4,12 @@ A small CLI tool that monitors an RSS feed and sends a Telegram alert when new i
 
 ## Installation
 
-### Using `uv`
+### Run once using uvx
+`uvx --from https://github.com/mkwant/uv-release.git release`
 
-```bash
-uv sync
+### Install using uv tool:
 ```
-
-Run:
-
-```bash
-rss-alert <rss-url>
-```
-
-### Using Docker
-
-```bash
-docker build -t rss-alert .
-docker run --rm rss-alert <rss-url>
+uv tool install --from https://github.com/mkwant/uv-release.git uv-release
 ```
 
 ## Configuration

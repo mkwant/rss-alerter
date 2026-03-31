@@ -20,7 +20,7 @@ Rss-alert is configured via environment variables or a .env file.
 TELEGRAM_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 ```
-### Optional variables
+### Optional variables (with defaults)
 ```
 LOG_LEVEL=INFO
 LOG_FILE=logs/rss-alert.log
@@ -59,26 +59,23 @@ HISTORY_FILE=history/history.json
 ## Usage
 
 ```bash
-rss-alert <rss-url> --filter <keyword>
+rss-alert <rss-url> --include <keyword>
 ```
 
 Multiple filters:
 
 ```bash
-rss-alert <rss-url> --filter <keyword1> --filter <keyword2>
+rss-alert <rss-url> --include <keyword1> --include <keyword2>
 ```
 
-By default **all filters must match**.
-Use `--match-any` to trigger when **any filter matches**:
+By default, all filters must match.
+Use `--include-any` to trigger when any filter matches:
 
 ```bash
-rss-alert <rss-url> --filter <keyword1> --filter <keyword2> --match-any
+rss-alert <rss-url> --include <keyword1> --include <keyword2> --include-any
 ```
 
-### Example Cron Job
-
-Run every 5 minutes:
-
+exclude filters can be added in a similar fashion:
 ```bash
-*/5 * * * * rss-alert https://example.com/rss --filter <keyword1>
+rss-alert <rss-url> --include <keyword1> --exclude <keyword2> --exclude <keyword3> --exclude-any
 ```

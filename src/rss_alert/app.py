@@ -67,9 +67,9 @@ async def process_feed(
     muted: bool = False,
 ) -> None:
     """Processes the parsed RSS feed and sends an alert if new items are added"""
-    if not title_filters:
-        title_filters = [""]
-    title_filters = [x.lower() for x in title_filters]
+    if title_filters is None:
+        title_filters: list[str] = [""]
+    title_filters: list[str] = [x.lower() for x in title_filters]
 
     if match_any:
         separator = "&"
@@ -78,8 +78,10 @@ async def process_feed(
 
     with FileLock(f"{history_file}.lock"):
         history = load_history(history_file=history_file)
+
+    history_key = create_history_key(title_filters=title_filters, separator=separator)
     # Convert to set for faster lookups
-    feed_history = set(history.get(rss_url, {}).get(create_history_key(title_filters, separator), []))
+    feed_history = set(history.get(rss_url, {}).get(history_key, []))
 
     items = await fetch_rss(rss_url=rss_url)
 

@@ -265,7 +265,7 @@ wheels = [
 
 [[package]]
 name = "rss-alert"
-version = "1.12.3"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "filelock" },

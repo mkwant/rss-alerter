@@ -12,8 +12,3 @@ def load_history(history_file: Path) -> dict[str, dict[str, list[str]]]:
 def save_history(history_file: Path, history: dict[str, dict[str, list[str]]]) -> None:
     """Save history as {feed_url: [guid1, guid2, ...]}"""
     history_file.write_text(json.dumps(obj=history, indent=4, sort_keys=True))
-
-
-def create_history_key(title_filters: list[str], separator: str) -> str:
-    """Creates the history key."""
-    return separator.join(sorted(title_filters))

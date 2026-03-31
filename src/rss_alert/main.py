@@ -32,9 +32,11 @@ def version_callback(value: bool) -> None:
 
 def run_rss_alert(
     rss_url: str,
-    title_filters: list[str] | None,
     settings: Settings,
-    match_any: bool = False,
+    include: list[str] | None = None,
+    include_any: bool = False,
+    exclude: list[str] | None = None,
+    exclude_any: bool = False,
     autoclean: bool = False,
     muted: bool = False,
 ) -> None:
@@ -45,9 +47,11 @@ def run_rss_alert(
         asyncio.run(
             rss_alert(
                 rss_url=rss_url,
-                title_filters=title_filters,
                 settings=settings,
-                match_any=match_any,
+                include=include,
+                include_any=include_any,
+                exclude=exclude,
+                exclude_any=exclude_any,
                 autoclean=autoclean,
                 muted=muted,
             )
@@ -71,27 +75,42 @@ def alert(
     rss_urls: Annotated[list[str], typer.Argument(help="Send alerts for one or more RSS urls")],
     env_file: Annotated[
         Path | None,
-        typer.Option("--env-file", "-e", help="Path to .env file. If not filled, script will try to detect one."),
+        typer.Option("--env-file", "-e", help="Path to .env file. If not filled, rss-alert will try to detect one."),
     ] = None,
-    title_filters: Annotated[
+    include: Annotated[
         list[str] | None,
         typer.Option(
-            "--filter",
-            "-f",
-            help="Only alert on RSS feed items with this text in the title. Can be used multiple times.",
+            "--include",
+            "-i",
+            help="Only alert on RSS feed items that include this text in the title. Can be used multiple times.",
         ),
     ] = None,
-    match_any: Annotated[
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--exclude",
+            "-x",
+            help="Only alert on RSS feed items that exclude this text in the title. Can be used multiple times.",
+        ),
+    ] = None,
+    include_any: Annotated[
         bool,
         typer.Option(
-            "--any/--all",
-            help="Match any filter instead of requiring all filters",
+            "--include-any",
+            help="Match any include filter instead of requiring all filters",
+        ),
+    ] = False,
+    exclude_any: Annotated[
+        bool,
+        typer.Option(
+            "--exclude-any",
+            help="Match any exclude filter instead of requiring all filters",
         ),
     ] = False,
     autoclean: Annotated[
-        bool, typer.Option(help="Remove items from history if they are not in the feed anymore.")
+        bool, typer.Option("--autoclean", help="Remove items from history if they are not in the feed anymore.")
     ] = False,
-    muted: Annotated[bool, typer.Option("--muted/--alert", help="Don't send alerts, just log to screen.")] = False,
+    muted: Annotated[bool, typer.Option("--muted", help="Don't send alerts, just log to screen.")] = False,
     _show_version: Annotated[
         bool,
         typer.Option(
@@ -114,9 +133,11 @@ def alert(
 
         run_rss_alert(
             rss_url=url,
-            title_filters=title_filters,
             settings=settings,
-            match_any=match_any,
+            include=include,
+            include_any=include_any,
+            exclude=exclude,
+            exclude_any=exclude_any,
             autoclean=autoclean,
             muted=muted,
         )

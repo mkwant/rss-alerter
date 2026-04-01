@@ -97,14 +97,14 @@ def alert(
         bool,
         typer.Option(
             "--include-any",
-            help="Match any include filter instead of requiring all filters",
+            help="Match any include filter instead of requiring all filters.",
         ),
     ] = False,
     exclude_any: Annotated[
         bool,
         typer.Option(
             "--exclude-any",
-            help="Match any exclude filter instead of requiring all filters",
+            help="Match any exclude filter instead of requiring all filters.",
         ),
     ] = False,
     autoclean: Annotated[
@@ -118,7 +118,7 @@ def alert(
             "-v",
             callback=version_callback,
             is_eager=True,
-            help="Show version and exit",
+            help="Show version and exit.",
         ),
     ] = False,
 ) -> None:

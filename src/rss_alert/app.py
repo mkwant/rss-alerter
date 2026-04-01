@@ -11,14 +11,15 @@ from loguru import logger
 
 from rss_alert.config import Settings
 from rss_alert.history import load_history, save_history
-from rss_alert.models import Alerter
+from rss_alert.models import Alerter, ItemFilter, RSSItem
 from rss_alert.telegrambot import TelegramAlerter
 
 truststore.inject_into_ssl()  # Use OS trust store
 
 
+
 def escape_str(string: str) -> str:
-    """Escape special characters for strings to be used in a markdown message."""
+    """Escape special characters for strings to be used in a Markdown message."""
     string = string.replace("_", r"\_")
     string = string.replace("*", r"\*")
     return string
@@ -33,7 +34,7 @@ def format_message(item: dict[str, str]) -> str:
 
 
 @tenacity.retry(stop=tenacity.stop_after_attempt(3))
-async def fetch_rss(rss_url: str) -> list[dict[str, str]]:
+async def fetch_rss(rss_url: str) -> list[RSSItem]:
     """Retrieves and parses the RSS feed"""
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         r = await client.get(rss_url)
@@ -66,7 +67,6 @@ def get_guid(item: dict) -> str | None:
 
     return guid
 
-
 @dataclass
 class TitleFilter:
     include: list[str] | None
@@ -80,11 +80,14 @@ class TitleFilter:
     def _exclude_separator(self) -> str:
         return "&" if self.exclude_any else "|"
 
-    def matches(self, title: str) -> bool:
+    def matches(self, feed_item: RSSItem) -> bool:
         """Checks if the title matches the include/exclude patterns"""
         # Normalize
         self.include = [x.lower() for x in (self.include or [])]
         self.exclude = [x.lower() for x in (self.exclude or [])]
+        title = feed_item.get('title')
+        if title is None:
+            raise ValueError('No title found')
         title = title.lower()
 
         # Include filter
@@ -120,7 +123,7 @@ async def process_feed(
     rss_url: str,
     alerter: Alerter,
     history_file: Path,
-    title_filter: TitleFilter,
+    item_filter: ItemFilter,
     autoclean: bool = False,
     muted: bool = False,
 ) -> None:
@@ -129,7 +132,7 @@ async def process_feed(
     # Read history file
     with FileLock(f"{history_file}.lock"):
         history = load_history(history_file=history_file)
-    history_key = title_filter.history_key()
+    history_key = item_filter.history_key()
     feed_history = set(history.get(rss_url, {}).get(history_key, []))
 
     # Fetch RSS feed
@@ -151,7 +154,7 @@ async def process_feed(
             continue
 
         # Filtering
-        if not title_filter.matches(title):
+        if not item_filter.matches(item):
             logger.debug(f"Item filtered out ({guid=}, {title=})")
             continue
 
@@ -213,7 +216,7 @@ async def rss_alert(
     await process_feed(
         alerter=alerter,
         rss_url=rss_url,
-        title_filter=title_filter,
+        item_filter=title_filter,
         autoclean=autoclean,
         muted=muted,
         history_file=settings.history_file,

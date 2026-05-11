@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class Alerter(Protocol):
@@ -11,4 +11,4 @@ class ItemFilter(Protocol):
     def history_key(self) -> str: ...
 
 
-RSSItem = dict[str, str]
+RSSItem = dict[str, Any]

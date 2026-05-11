@@ -17,7 +17,6 @@ from rss_alert.telegrambot import TelegramAlerter
 truststore.inject_into_ssl()  # Use OS trust store
 
 
-
 def escape_str(string: str) -> str:
     """Escape special characters for strings to be used in a Markdown message."""
     string = string.replace("_", r"\_")
@@ -33,39 +32,87 @@ def format_message(item: dict[str, str]) -> str:
         return f"*{escape_str(item['title'])}*\n{escape_str(item['link'])}"
 
 
-@tenacity.retry(stop=tenacity.stop_after_attempt(3))
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    retry=tenacity.retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+)
 async def fetch_rss(rss_url: str) -> list[RSSItem]:
-    """Retrieves and parses the RSS feed"""
+    """Retrieve and parse an RSS or Atom feed."""
+
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        r = await client.get(rss_url)
+        r = await client.get(url=rss_url)
         r.raise_for_status()
 
     try:
-        rss_dict = xmltodict.parse(r.text)
+        feed = xmltodict.parse(r.text)
     except ExpatError:
-        logger.error(f"Failed to parse RSS feed at '{rss_url}', not a valid XML file.")
+        logger.error(f"Feed '{rss_url}' is not valid XML.")
         return []
 
-    try:
-        items = rss_dict["rss"]["channel"]["item"]
-    except KeyError:
-        logger.error(f"RSS feed at '{rss_url}' has no items, not a valid XML file.")
+    # Rss feeds
+    if feed.get("rss"):
+        logger.debug(f"Feed '{rss_url}' is RSS")
+        items = feed.get("rss", {}).get("channel", {}).get("item")
+
+    # Atom feeds
+    elif feed.get("feed"):
+        logger.debug(f"Feed '{rss_url}' is Atom")
+        items = feed.get("feed", {}).get("entry")
+
+    else:
+        logger.error(f"Feed '{rss_url}' is not RSS or Atom.")
+        return []
+
+    if not items:
+        logger.error(f"Feed '{rss_url}' contains no items.")
         return []
 
     if isinstance(items, dict):
         items = [items]
 
     logger.info(f"Fetched RSS feed '{rss_url}' with {len(items)} items")
+
     return items
 
 
 def get_guid(item: dict) -> str | None:
-    guid = item.get("guid") or item.get("link")
+    """Retrieve a guid for the rss feed item."""
+    guid = item.get("guid")
 
+    # RSS guid as dict
     if isinstance(guid, dict):
-        return guid.get("#text")
+        guid = guid.get("#text")
 
-    return guid
+    if isinstance(guid, str):
+        return guid
+
+    link = item.get("link")
+
+    # RSS link as string
+    if isinstance(link, str):
+        return link
+
+    # Atom link as dict
+    if isinstance(link, dict):
+        return link.get("@href")
+
+    # Atom link as list
+    if isinstance(link, list):
+        for entry in link:
+            if not isinstance(entry, dict):
+                continue
+
+            # Prefer alternate link
+            if entry.get("@rel") == "alternate":
+                return entry.get("@href")
+
+        # Fallback to first href
+        for entry in link:
+            if isinstance(entry, dict) and entry.get("@href"):
+                return entry["@href"]
+
+    return None
+
 
 @dataclass
 class TitleFilter:
@@ -85,9 +132,9 @@ class TitleFilter:
         # Normalize
         self.include = [x.lower() for x in (self.include or [])]
         self.exclude = [x.lower() for x in (self.exclude or [])]
-        title = feed_item.get('title')
+        title = feed_item.get("title")
         if title is None:
-            raise ValueError('No title found')
+            raise ValueError("No title found")
         title = title.lower()
 
         # Include filter

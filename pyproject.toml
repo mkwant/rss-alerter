@@ -4,6 +4,7 @@ version = "2.3.0"
 description = "Sends an alert for new entries in an rss feed"
 requires-python = ">=3.14"
 dependencies = [
+    "feedparser>=6.0.12",
     "filelock>=3.29.0",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
@@ -14,7 +15,6 @@ dependencies = [
     "tenacity>=9.1.4",
     "truststore>=0.10.4",
     "typer>=0.25.1",
-    "xmltodict>=1.0.4",
 ]
 
 [dependency-groups]

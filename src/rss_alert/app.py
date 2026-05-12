@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
-from pyexpat import ExpatError
 
 import httpx
 import tenacity
 import truststore
-import xmltodict
+from feedparser import FeedParserDict, parse
 from filelock import FileLock
 from loguru import logger
 
@@ -24,94 +23,10 @@ def escape_str(string: str) -> str:
     return string
 
 
-def format_message(item: dict[str, str]) -> str:
+def format_message(item: FeedParserDict) -> str:
     """Helper to format the message"""
-    try:
-        return f"*{escape_str(item['title'])}*\n{escape_str(item['description'])}\n{escape_str(item['link'])}"
-    except KeyError:
-        return f"*{escape_str(item['title'])}*\n{escape_str(item['link'])}"
-
-
-@tenacity.retry(
-    stop=tenacity.stop_after_attempt(3),
-    retry=tenacity.retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
-)
-async def fetch_rss(rss_url: str) -> list[RSSItem]:
-    """Retrieve and parse an RSS or Atom feed."""
-
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        r = await client.get(url=rss_url)
-        r.raise_for_status()
-
-    try:
-        feed = xmltodict.parse(r.text)
-    except ExpatError:
-        logger.error(f"Feed '{rss_url}' is not valid XML.")
-        return []
-
-    # Rss feeds
-    if feed.get("rss"):
-        logger.debug(f"Feed '{rss_url}' is RSS")
-        items = feed.get("rss", {}).get("channel", {}).get("item")
-
-    # Atom feeds
-    elif feed.get("feed"):
-        logger.debug(f"Feed '{rss_url}' is Atom")
-        items = feed.get("feed", {}).get("entry")
-
-    else:
-        logger.error(f"Feed '{rss_url}' is not RSS or Atom.")
-        return []
-
-    if not items:
-        logger.error(f"Feed '{rss_url}' contains no items.")
-        return []
-
-    if isinstance(items, dict):
-        items = [items]
-
-    logger.info(f"Fetched RSS feed '{rss_url}' with {len(items)} items")
-
-    return items
-
-
-def get_guid(item: dict) -> str | None:
-    """Retrieve a guid for the rss feed item."""
-    guid = item.get("guid")
-
-    # RSS guid as dict
-    if isinstance(guid, dict):
-        guid = guid.get("#text")
-
-    if isinstance(guid, str):
-        return guid
-
-    link = item.get("link")
-
-    # RSS link as string
-    if isinstance(link, str):
-        return link
-
-    # Atom link as dict
-    if isinstance(link, dict):
-        return link.get("@href")
-
-    # Atom link as list
-    if isinstance(link, list):
-        for entry in link:
-            if not isinstance(entry, dict):
-                continue
-
-            # Prefer alternate link
-            if entry.get("@rel") == "alternate":
-                return entry.get("@href")
-
-        # Fallback to first href
-        for entry in link:
-            if isinstance(entry, dict) and entry.get("@href"):
-                return entry["@href"]
-
-    return None
+    desc = item.get(key="description", default="") or item.get(key="summary", default="")
+    return f"*{escape_str(item['title'])}*\n{escape_str(desc)}\n{escape_str(item['link'])}"
 
 
 @dataclass
@@ -130,29 +45,29 @@ class TitleFilter:
     def matches(self, feed_item: RSSItem) -> bool:
         """Checks if the title matches the include/exclude patterns"""
         # Normalize
-        self.include = [x.lower() for x in (self.include or [])]
-        self.exclude = [x.lower() for x in (self.exclude or [])]
+        include = [x.lower() for x in (self.include or [])]
+        exclude = [x.lower() for x in (self.exclude or [])]
         title = feed_item.get("title")
         if title is None:
             raise ValueError("No title found")
         title = title.lower()
 
         # Include filter
-        if self.include:
+        if include:
             if self.include_any:
-                include_match = any(x in title for x in self.include)
+                include_match = any(x in title for x in include)
             else:
-                include_match = all(x in title for x in self.include)
+                include_match = all(x in title for x in include)
 
             if not include_match:
                 return False
 
         # Exclude filter
-        if self.exclude:
+        if exclude:
             if self.exclude_any:
-                exclude_match = any(x in title for x in self.exclude)
+                exclude_match = any(x in title for x in exclude)
             else:
-                exclude_match = all(x in title for x in self.exclude)
+                exclude_match = all(x in title for x in exclude)
 
             if exclude_match:
                 return False
@@ -164,6 +79,20 @@ class TitleFilter:
         include_part = self._include_separator().join(sorted(self.include)) if self.include else ""
         exclude_part = self._exclude_separator().join(sorted(self.exclude)) if self.exclude else ""
         return f"{include_part}/{exclude_part}"
+
+
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(3),
+    retry=tenacity.retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+)
+async def fetch_rss(rss_url: str) -> str:
+    """Retrieve an RSS or Atom feed."""
+
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        r = await client.get(url=rss_url)
+        r.raise_for_status()
+
+    return r.text
 
 
 async def process_feed(
@@ -183,15 +112,19 @@ async def process_feed(
     feed_history = set(history.get(rss_url, {}).get(history_key, []))
 
     # Fetch RSS feed
-    items = await fetch_rss(rss_url=rss_url)
+    rss_feed = await fetch_rss(rss_url)
+    parsed_feed = parse(rss_feed)
+    items = parsed_feed.entries
+
+    logger.info(f"Fetched RSS feed '{rss_url}' with {len(items)} items")
 
     # Process RSS feed items
     new_items = False
 
     for item in items:
-        guid = get_guid(item)
+        guid = item.guid
+        title = item.title
 
-        title = item.get("title")
         if not title:
             logger.warning(f"No title found for {guid=}")
             continue
@@ -223,7 +156,7 @@ async def process_feed(
     # Autoclean
     deleted_items = False
     if autoclean:
-        new_items_guids = [get_guid(x) for x in items]
+        new_items_guids = [x.guid for x in items]
 
         for guid in feed_history.copy():
             if guid in new_items_guids:

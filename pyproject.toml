@@ -4,8 +4,8 @@ version = "2.4.3"
 description = "Sends an alert for new entries in an rss feed"
 requires-python = ">=3.14"
 dependencies = [
-    "feedparser>=6.0.12",
-    "filelock>=3.30.2",
+    "feedparser>=6.0.14",
+    "filelock>=3.32.2",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
     "pydantic>=2.13.4",
@@ -14,13 +14,13 @@ dependencies = [
     "python-telegram-bot>=22.8",
     "tenacity>=9.1.4",
     "truststore>=0.10.4",
-    "typer>=0.27.0",
+    "typer>=0.27.1",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.22",
-    "ty>=0.0.60",
+    "ruff>=0.16.1",
+    "ty>=0.0.68",
 ]
 
 [tool.uv]

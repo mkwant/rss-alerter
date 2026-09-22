@@ -5,7 +5,7 @@ description = "Sends an alert for new entries in an rss feed"
 requires-python = ">=3.14"
 dependencies = [
     "feedparser==6.0.14",
-    "filelock==3.32.6",
+    "filelock==4.0.1",
     "httpx==0.28.1",
     "loguru==0.7.3",
     "pydantic==2.13.5",
@@ -19,8 +19,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "ruff==0.16.6",
-    "ty==0.0.79",
+    "ruff==0.16.8",
+    "ty==0.0.83",
 ]
 
 [tool.uv]

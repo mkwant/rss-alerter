@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +17,15 @@ from rss_alert.telegrambot import TelegramAlerter
 truststore.inject_into_ssl()  # Use OS trust store
 
 
+def html_to_text(html: str) -> str:
+    """Convert basic HTML formatting to plain text for Markdown messages."""
+    # Turn <br>, <br/>, <br /> into real line breaks
+    text = re.sub(pattern=r"<br\s*/?>", repl="\n", string=html, flags=re.IGNORECASE)
+    # Strip any other HTML tags that might sneak in from the feed
+    text = re.sub(pattern=r"<[^>]+>", repl="", string=text)
+    return text.strip()
+
+
 def escape_str(string: str) -> str:
     """Escape special characters for strings to be used in a Markdown message."""
     string = string.replace("_", r"\_")
@@ -26,6 +36,7 @@ def escape_str(string: str) -> str:
 def format_message(item: FeedParserDict) -> str:
     """Helper to format the message"""
     desc = item.get(key="description", default="") or item.get(key="summary", default="")
+    desc = html_to_text(desc)
     return f"*{escape_str(item['title'])}*\n{escape_str(desc)}\n{escape_str(item['link'])}"
 
 
@@ -122,8 +133,8 @@ async def process_feed(
     new_items = False
 
     for item in items:
-        guid = item.guid
-        title = item.title
+        guid = item.get("guid")
+        title = item.get("title")
 
         if not title:
             logger.warning(f"No title found for {guid=}")

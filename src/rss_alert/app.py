@@ -4,6 +4,7 @@ from pathlib import Path
 
 import httpx2
 import tenacity
+import truststore
 from feedparser import FeedParserDict, parse
 from filelock import FileLock
 from loguru import logger
@@ -12,6 +13,8 @@ from rss_alert.config import Settings
 from rss_alert.history import load_history, save_history
 from rss_alert.models import Alerter, ItemFilter, RSSItem
 from rss_alert.telegrambot import TelegramAlerter
+
+truststore.inject_into_ssl()  # Use OS trust store
 
 
 def html_to_text(html: str) -> str:

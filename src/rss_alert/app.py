@@ -2,9 +2,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import httpx
+import httpx2
 import tenacity
-import truststore
 from feedparser import FeedParserDict, parse
 from filelock import FileLock
 from loguru import logger
@@ -13,8 +12,6 @@ from rss_alert.config import Settings
 from rss_alert.history import load_history, save_history
 from rss_alert.models import Alerter, ItemFilter, RSSItem
 from rss_alert.telegrambot import TelegramAlerter
-
-truststore.inject_into_ssl()  # Use OS trust store
 
 
 def html_to_text(html: str) -> str:
@@ -94,12 +91,12 @@ class TitleFilter:
 
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(3),
-    retry=tenacity.retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+    retry=tenacity.retry_if_exception_type((httpx2.HTTPError, httpx2.TimeoutException)),
 )
 async def fetch_rss(rss_url: str) -> str:
     """Retrieve an RSS or Atom feed."""
 
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+    async with httpx2.AsyncClient(timeout=30, follow_redirects=True) as client:
         r = await client.get(url=rss_url)
         r.raise_for_status()
 

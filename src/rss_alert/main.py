@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from typing import Annotated
 
-import httpx
+import httpx2
 import tenacity
 import typer
 from loguru import logger
@@ -59,9 +59,9 @@ def run_rss_alert(
     except tenacity.RetryError as e:
         cause = e.last_attempt.exception()
 
-        if isinstance(cause, httpx.HTTPStatusError):
+        if isinstance(cause, httpx2.HTTPStatusError):
             logger.error(f"Failed to fetch RSS feed: HTTP error {cause.response.status_code} for {cause.request.url}")
-        elif isinstance(cause, httpx.RequestError):
+        elif isinstance(cause, httpx2.RequestError):
             logger.error(f"Network error while fetching RSS feed: {cause}")
         else:
             logger.error(f"RSS fetch failed after retries: {cause}")

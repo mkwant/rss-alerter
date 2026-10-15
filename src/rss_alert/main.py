@@ -10,6 +10,7 @@ from pydantic import HttpUrl, TypeAdapter, ValidationError
 
 from rss_alert import __version__
 from rss_alert.config import Settings, load_settings
+lazy from rss_alert.app import rss_alert
 
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False, no_args_is_help=True)
 url_adapter = TypeAdapter(HttpUrl)
@@ -41,7 +42,6 @@ def run_rss_alert(
     muted: bool = False,
 ) -> None:
     """Sync wrapper for CLI / cron usage."""
-    from rss_alert.app import rss_alert
 
     try:
         asyncio.run(
